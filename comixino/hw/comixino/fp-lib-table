@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "comix")(type "KiCad")(uri "${KIPRJMOD}/comix.pretty")(options "")(descr ""))
+)
