@@ -22,4 +22,5 @@ A pass-trough connection is also available allowing to experiment with the bus s
 ## Case
 Modified [case](https://github.com/issalig/comix35/tree/main/case) based in https://www.thingiverse.com/thing:5405097 with hole for cartridges and left aligned keys. Suitable for printing in small/standard 3d printers.
 
+![case](case/comix35.jpg)
 
