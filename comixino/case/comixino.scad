@@ -3,24 +3,25 @@
  Author: issalig
  Date: 10/05/25
  */
-width = 81.13;//87.6; //24
-height = 68.1; //40
-thick_hor = 2.4;
+ 
+case_cl = 0.4;  //clearance for width and height
+case_width = 81.128 + case_cl;
+case_height = 68.05 + case_cl;
+thick_hor = 2.4+0.5;
 deep = 20;
 int_support_height=3;
 
 depth=20;
 thick_vert = thick_hor /2;
-thick_dent = 1;
-depth_dent = 3.2;//thick_hor /2;
+thick_dent = 1+0.5;
+depth_dent = 3.2;
 fillet_r = thick_hor;
 groove_d = 0.5;
 groove_length = 6;
 groove_deep = 1.4;
-groove_height = 0.25+0.01;  //0.01 solo en tab ojo
+groove_height = 0.25+0.01;  //0.01 only in tab
 
 joint_dent_offset = 0.8; //space between two halfs when mounted
-
 
 hole_m3 = 3;
 hole0_offx = 38.11;
@@ -38,12 +39,16 @@ hole3_offx = 70.90;
 hole3_offy = 4.05;
 
 //up left
-hole4_offx = 14.50;
+hole4_offx = 14.05;
 hole4_offy = 63.95;
 
 //down left
 hole5_offx = 4.35;
 hole5_offy = 4.05;
+
+//central 
+hole6_offx = 36.55;
+hole6_offy = 56;
 
 //buttons
 button_offx = 13;
@@ -51,28 +56,24 @@ button_offy = 5.6;
 button_deltax = 8.058;
 button_radius =2.25;
 
-screen_offx = 23.8;
-screen_offy = 24.9;
+//screen
+screen_offx = 26.3-1;
+screen_offy = 32.4-1;
+screen_width = 22+2;
+screen_height = 11.5+2;
 
-screen_width = 27;
-screen_height = 22;
-
-screen2_offx =19.3;
-screen2_offy = 39.74;
-
-screen2_width = 37.95;
-screen2_height =12;
-
+//edge expansion
 edge_height = 58.02+1;
 edge_offx = 0;
 edge_offy =4.99;
 
+//arduino usb conn
 arduino_offx=4.9;
 arduino_offy=23.18;
 
+//sd card
 sd_offx=51.45;
 sd_offy=25.75;
-
 
 //leds
 led1_offx = 53.67;
@@ -121,25 +122,22 @@ module cube_raiser(){
 
 module button_cap(deep=10, r=2.5){
     translate([0,0,2])
-    cylinder(h=deep-2, r=r, $fn=60);
-    difference(){
-        cylinder(h=2,d=3.5+3, $fn=60);
-        cylinder(h=0.5,d=3.5, $fn=60);
-    }
+    cylinder(h=deep, r=r, $fn=60);    
+    cylinder(h=5.4,d=6.5, $fn=60);        
 }
 
-module int_support(){
+module int_support(int_support_height=int_support_height){
     translate([0,0,-thick_hor*0])
         cylinder(h=int_support_height, r=thick_hor, $fn=60);
-    translate([0,height,-thick_hor*0])
+    translate([0,case_height,-thick_hor*0])
         cylinder(h=int_support_height, r=thick_hor, $fn=60);
-    translate([width,0,-thick_hor*0])
+    translate([case_width,0,-thick_hor*0])
         cylinder(h=int_support_height, r=thick_hor, $fn=60);
-    translate([width,height,-thick_hor*0])
+    translate([case_width,case_height,-thick_hor*0])
         cylinder(h=int_support_height, r=thick_hor, $fn=60);    
 }
 
-module screws_hole(hole_depth=100){
+module screws_hole(hole_depth=30){
     /*hole1_offx = 38.11;
     hole1_offy = 32.65;
     hole2_offx = 77.35;
@@ -222,34 +220,24 @@ module screws_down(depth=20, hole_depth=50, hole=false){
 }
 
 module screws_up(depth=20, hole_depth=10, hole=false){
-
-    //hole0_offx = 38.11;
-    //hole0_offy = 20.54;
-    //hole1_offx = 38.11;
-    //hole1_offy = 32.65;
-    /*
-    hole2_offx = 77.35;
-    hole2_offy = 58.95;
-    hole3_offx = 77.35;
-    hole3_offy = 4.04;
-   */
-   
     cl = 0.2;
     
     difference(){
         union(){
-            //translate([hole0_offx, hole0_offy,0])
-            //cylinder(h=depth, d=3+2, $fn=60);
-            //translate([hole2_offx, hole2_offy,0])
-            //cylinder(h=depth, d1=hole_m3+2, d2=3+4, $fn=60);
+
+            translate([hole5_offx, hole5_offy,0])
+            cylinder(h=depth, d1=hole_m3+2, d2=3+4, $fn=60);
             translate([hole3_offx, hole3_offy,0])
             cylinder(h=depth, d1=hole_m3+2, d2=3+4, $fn=60);
+            //centrall support
+            translate([hole6_offx, hole6_offy,0])
+            cylinder(h=depth, d1=hole_m3+2, d2=3+4, $fn=60);
+            
         }
         if (hole){
-            //translate([hole0_offx, hole0_offy,0])
-            //cylinder(h=hole_depth, d=3, $fn=60);
-            //translate([hole2_offx, hole2_offy,0])
-            //cylinder(h=hole_depth, d=hole_m3-cl, $fn=60);
+
+            translate([hole5_offx, hole5_offy,0])
+            cylinder(h=hole_depth, d=hole_m3-cl, $fn=60);
             translate([hole3_offx, hole3_offy,0])
             cylinder(h=hole_depth, d=hole_m3-cl, $fn=60);
         }        
@@ -265,19 +253,20 @@ cube([6.15, 56.95,30]);
 
 module conn_side_hole(depth=5){
     //usb height 11.5 16.1
-    translate([9.8, 68,int_support_height+pcb_deep+11.5])
-    #cube([13.5-5,thick_hor*2,16.2-11.5]);
+    translate([8.8, 68,int_support_height+pcb_deep+10.5])
+    #cube([10.5,thick_hor*2,18.2-11.5]);
     
     //jumpers
-    translate([19.53+4.5,68,depth])
-    #cube([40.5,thick_hor*2,7]);
+    translate([19.53+3.5,68,depth])
+    #cube([41.5,thick_hor*2,7]);
     
     //sd 
-    translate([sd_offx+3, 68,int_support_height+pcb_deep+11.5])
+    translate([sd_offx+4, 68,int_support_height+pcb_deep+11.5])
     #cube([16, thick_hor*2, 16.2-11.5]);
     
-    //translate([60.91+18/2, 68+46,int_support_height+pcb_deep+11.5])
-    //cylinder(h=16.2-11.5+2+10, d=90, $fn=90);
+    //sd rounded
+    translate([sd_offx+12, 68+14,int_support_height+pcb_deep+11.5])
+    #cylinder(h=16.2-11.5+2+10, d=32, $fn=120);
 }
 
 module edge_hole(deep=10){
@@ -286,7 +275,7 @@ module edge_hole(deep=10){
     cube([thick_hor*2, edge_height, deep]);
 }
 
-module led_hole(deep=100){
+module led_hole(deep=30){
     cl=0.1;
     translate([led1_offx, led1_offy,0]){
         cylinder(h=deep, d=led_diam+cl, $fn=60);
@@ -296,7 +285,7 @@ module led_hole(deep=100){
     }
 }
 
-module button_hole(deep=100){
+module button_hole(deep=30){
     for(i=[0:1:6]){
     cl=0.1;
         translate([button_offx+i*button_deltax,button_offy,0]){
@@ -318,7 +307,7 @@ module button_hole_tube(deep=6){
 }
 
 
-module screen(deep=100){
+module screen(deep=30){
     translate([screen_offx, screen_offy,0])
     cube([screen_width,screen_height,deep]);
 }
@@ -334,11 +323,11 @@ module half_case(depth=5, thick=1.8, thick2=0.8, inner=true, base = false){
         hull(){
             translate([0,0,0])
                 cylinder(h=depth, r=thick_hor, $fn=60);
-            translate([0,height,0])
+            translate([0,case_height,0])
                 cylinder(h=depth, r=thick_hor, $fn=60);
-            translate([width,0,0])
+            translate([case_width,0,0])
                 cylinder(h=depth, r=thick_hor, $fn=60);
-            translate([width,height,0])
+            translate([case_width,case_height,0])
                 cylinder(h=depth, r=thick_hor, $fn=60);        
         }
     
@@ -350,55 +339,55 @@ module half_case(depth=5, thick=1.8, thick2=0.8, inner=true, base = false){
             //inner rounded border
             translate([0,0,0])
             cylinder(h=depth+depth_dent+joint_dent_offset, r=thick_dent, $fn=60);
-            translate([0,height,0])
+            translate([0,case_height,0])
             cylinder(h=depth+depth_dent+joint_dent_offset, r=thick_dent, $fn=60);
-            translate([width,0,0])
+            translate([case_width,0,0])
             cylinder(h=depth+depth_dent+joint_dent_offset, r=thick_dent, $fn=60);
-            translate([width,height,0])
+            translate([case_width,case_height,0])
             cylinder(h=depth+depth_dent+joint_dent_offset, r=thick_dent, $fn=60);        
         }     
                 
         
                 
         //tab cube
-        translate([width*0.15-groove_length/2,-thick_dent-groove_height,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([case_width*0.15-groove_length/2,-thick_dent-groove_height,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_length, groove_height, groove_deep]);
         }
 
-        translate([width*0.85-groove_length/2,-thick_dent-groove_height,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([case_width*0.85-groove_length/2,-thick_dent-groove_height,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_length, groove_height, groove_deep]);
         }        
  
          
-        translate([width*0.15-groove_length/2,height+thick_dent,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([case_width*0.15-groove_length/2,case_height+thick_dent,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_length, groove_height, groove_deep]);
         }
 
-        translate([width*0.85-groove_length/2,height+thick_dent,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([case_width*0.85-groove_length/2,case_height+thick_dent,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_length, groove_height, groove_deep]);
         }   
 
 ///// tabs in Y     
-        translate([-thick_dent-groove_height,height*0.15-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([-thick_dent-groove_height,case_height*0.15-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_height, groove_length, groove_deep]);
         }
 
-        translate([-thick_dent-groove_height,height*0.85-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([-thick_dent-groove_height,case_height*0.85-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_height, groove_length, groove_deep]);
         }  
        
-        translate([width+thick_dent,height*0.15-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([case_width+thick_dent,case_height*0.15-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_height, groove_length, groove_deep]);
         }
 
-        translate([width+thick_dent,height*0.85-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
+        translate([case_width+thick_dent,case_height*0.85-groove_length/2,depth+depth_dent+joint_dent_offset-groove_deep])
         {        
         cube([groove_height, groove_length, groove_deep]);
         }  
@@ -413,22 +402,22 @@ module half_case(depth=5, thick=1.8, thick2=0.8, inner=true, base = false){
             hull(){
             translate([0,0,0])
                 cylinder(h=depth+depth_dent, r=thick_hor, $fn=60);
-                translate([0,height,0])
+                translate([0,case_height,0])
                 cylinder(h=depth+depth_dent, r=thick_hor, $fn=60);
-                translate([width,0,0])
+                translate([case_width,0,0])
                 cylinder(h=depth+depth_dent, r=thick_hor, $fn=60);
-                translate([width,height,0])
+                translate([case_width,case_height,0])
                 cylinder(h=depth+depth_dent, r=thick_hor, $fn=60);        
             }
            
             hull(){
             translate([0,0,0])
                 cylinder(h=depth+depth_dent, r=thick_dent+border_cl, $fn=60);
-                translate([0,height,0])
+                translate([0,case_height,0])
                 cylinder(h=depth+depth_dent, r=thick_dent+border_cl, $fn=60);
-                translate([width,0,0])
+                translate([case_width,0,0])
                 cylinder(h=depth+depth_dent, r=thick_dent+border_cl, $fn=60);
-                translate([width,height,0])
+                translate([case_width,case_height,0])
                 cylinder(h=depth+depth_dent, r=thick_dent+border_cl, $fn=60);
             } 
        
@@ -437,44 +426,44 @@ module half_case(depth=5, thick=1.8, thick2=0.8, inner=true, base = false){
         groove_deep2 = groove_deep + cyl_cl; 
       
            //groove cube
-        #translate([width*0.15-groove_length2/2-cyl_cl,-thick_dent-(groove_height+cyl_cl),depth])
+        #translate([case_width*0.15-groove_length2/2-cyl_cl,-thick_dent-(groove_height+cyl_cl),depth])
         {        
         cube([groove_length2, groove_height+cyl_cl, groove_deep2]);
         }
 
-        #translate([width*0.85-groove_length2/2-cyl_cl,-thick_dent-(groove_height+cyl_cl),depth])        {        
+        #translate([case_width*0.85-groove_length2/2-cyl_cl,-thick_dent-(groove_height+cyl_cl),depth])        {        
         cube([groove_length2, groove_height+cyl_cl, groove_deep2]);
         }        
  
          
-        translate([width*0.15-groove_length2/2-cyl_cl,height+thick_dent,depth])
+        translate([case_width*0.15-groove_length2/2-cyl_cl,case_height+thick_dent,depth])
         {        
         cube([groove_length2, groove_height+cyl_cl, groove_deep2]);
         }
 
-        #translate([width*0.85-groove_length2/2-cyl_cl,height+thick_dent,depth])
+        #translate([case_width*0.85-groove_length2/2-cyl_cl,case_height+thick_dent,depth])
         {        
         cube([groove_length2, groove_height+cyl_cl, groove_deep2]);
         }   
 
 //////////////////////////
-        #translate([-thick_dent-(groove_height+cyl_cl),height*0.15-groove_length2/2-cyl_cl,depth])
+        #translate([-thick_dent-(groove_height+cyl_cl),case_height*0.15-groove_length2/2-cyl_cl,depth])
         {        
         cube([groove_height+cyl_cl, groove_length2,  groove_deep2]);
         }
 
-        #translate([-thick_dent-(groove_height+cyl_cl),height*0.85-groove_length2/2-cyl_cl,depth])
+        #translate([-thick_dent-(groove_height+cyl_cl),case_height*0.85-groove_length2/2-cyl_cl,depth])
         {        
         cube([groove_height+cyl_cl, groove_length2,  groove_deep2]);
         }
 
         
-        translate([width+thick_dent,height*0.15-groove_length2/2-cyl_cl,depth])
+        translate([case_width+thick_dent,case_height*0.15-groove_length2/2-cyl_cl,depth])
         {        
         cube([groove_height+cyl_cl, groove_length2,  groove_deep2]);
         }
 
-        translate([width+thick_dent,height*0.85-groove_length2/2-cyl_cl,depth])
+        translate([case_width+thick_dent,case_height*0.85-groove_length2/2-cyl_cl,depth])
         {        
         cube([groove_height+cyl_cl, groove_length2,  groove_deep2]);
         }
@@ -487,7 +476,7 @@ module half_case(depth=5, thick=1.8, thick2=0.8, inner=true, base = false){
     }
     
     //remove inner volume
-    cube([width,height,depth +depth_dent +joint_dent_offset+ 0.001]);
+    cube([case_width,case_height,depth +depth_dent +joint_dent_offset+ 0.001]);
     
     //edge_hole();
 
@@ -501,33 +490,41 @@ module half_case(depth=5, thick=1.8, thick2=0.8, inner=true, base = false){
         minkowski(){    
             hull(){        
                 cylinder(h=0.00001, r=thick_vert, $fn=60);
-            translate([0,height,0])
+            translate([0,case_height,0])
                 cylinder(h=0.00001, r=thick_vert, $fn=60);
-            translate([width,0,0])
+            translate([case_width,0,0])
                 cylinder(h=0.00001, r=thick_vert, $fn=60);
-            translate([width,height,0])
+            translate([case_width,case_height,0])
                 cylinder(h=0.00001, r=thick_vert, $fn=60);        
             }
         sphere(r=thick_vert, $fn=60);
         }
         
         translate([-thick_hor,-thick_hor,0])    
-        cube([width+2*thick_hor, height+2*thick_hor, thick_vert]);
+        cube([case_width+2*thick_hor, case_height+2*thick_hor, thick_vert]);
         }
     }    
 }
 
-translate([-75.6-6.45,124.3+0,int_support_height+pcb_deep/2])
-import("comixino.stl");
+module buttons(){
+button_deep=5;
+    for(i=[0:1:6]){
+        color("#FF6A00")
+        translate([button_offx+i*button_deltax,button_offy,int_support_height+pcb_deep+button_deep]){
+        button_cap(deep=13, r=button_radius-0.3);   
+        }
+    }
+
+}
 
  
 module symbols(deep=0.5){ 
 
-    s=["\u25b2","\u25bc", "\u25b2", "\u25a0","@","\u25cf","R"];
+    s=["\u25b2","\u25bc", "\u25b2" ,"\u25cf","\u25a0","@","R"];
     
     for(i=[0:1:len(s)]){    
         translate([i*button_deltax+button_offx,11,0]){                
-            #linear_extrude(deep)
+            linear_extrude(deep)
             if (i==2) {rotate([0,0,-90])
             text(s[i], size=4, valign="center", halign="center", font="Liberation Sans", $fn=30);
             }
@@ -567,25 +564,24 @@ module logo(h=0.5, size=5.5)
 
 
 module base(depth=base_depth){
-#difference(){
-    half_case(depth=depth, inner=true, base=true);
-    conn_side_hole();
+    #difference(){
+        half_case(depth=depth, inner=true, base=true);
+        conn_side_hole();
+        
+        #translate([sd_offx, sd_offy,int_support_height+pcb_deep+11.5])
+        sd();
+        #translate([arduino_offx, arduino_offy,int_support_height+pcb_deep+11.5])
+        arduino();      
+        //translate([0,0,0])
+        #edge_hole(deep=15);
+        translate([0,0,-thick_vert])
+        #screws_hole();
+    //translate([0,0,-thick_hor])
+    }
+    //internal support on corners
+    int_support(int_support_height);
     
-    #translate([sd_offx, sd_offy,int_support_height+pcb_deep+11.5])
-    sd();
-    #translate([arduino_offx, arduino_offy,int_support_height+pcb_deep+11.5])
-    arduino(); 
-
- 
-    //translate([0,0,0])
-    #edge_hole(deep=15);
-    translate([0,0,-thick_vert])
-    #screws_hole();
-//translate([0,0,-thick_hor])
-}
-int_support();
-
-screws_down(depth=int_support_height);
+    screws_down(depth=int_support_height);
 }
 
 module top(depth=12.5){
@@ -598,51 +594,35 @@ module top(depth=12.5){
         translate([0,0,-(base_deep+joint_dent_offset)])    
         conn_side_hole();
         //conn_up_hole();
-        led_hole();
+        //led_hole();
         button_hole();
         screen();
-    translate([0,0,+depth+1*depth_dent+thick_vert-0.5])        
-    #symbols(deep=0.5);
-    
-    translate([width*0.465,height*0.85,+depth+1*depth_dent+thick_vert-0.5])        
-    #logo();
-    
-
-    
+        translate([0,0,+depth+1*depth_dent+thick_vert-0.5])        
+        symbols(deep=0.5);
+        
+        translate([case_width*0.465,case_height*0.85,+depth+1*depth_dent+thick_vert-0.5])        
+        logo();       
     }
     
-
-    
-    
-//upper screws
-#translate([0,0,-joint_dent_offset-1*(base_deep-int_support_height-pcb_deep)])
-screws_up(depth=depth+depth_dent+joint_dent_offset+(base_deep-int_support_height-pcb_deep)+0.1, hole=true);
-
+    //upper screws
+    translate([0,0,-0.8*joint_dent_offset-1*(base_deep-int_support_height-pcb_deep)])
+    screws_up(depth=depth+depth_dent+joint_dent_offset+(base_deep-int_support_height-pcb_deep)+0.1, hole=true);
 
     #translate([0,0,10])
-button_hole_tube();
-
+    button_hole_tube();
 }
 
 base_deep = 5;
-//color("#DFDFDF")
+color("#DFDFDF")
 base(depth=base_deep);
 
 translate([0,0,base_deep+joint_dent_offset+0])
-//color("#DFDFDF")
+color("#DFDFDF")
 top();
 
-//buttons();
+buttons();
+
+//translate([-75.6-6.45,124.3+0,int_support_height+pcb_deep/2])
+//import("comixino.stl");
 
 
-
-module buttons(){
-button_deep=4.5;
-    for(i=[0:1:6]){
-        color("#FF6A00")
-        translate([button_offx+i*button_deltax,button_offy,int_support_height+pcb_deep+button_deep]){
-        button_cap(deep=15, r=button_radius-0.3);   
-        }
-    }
-
-}
