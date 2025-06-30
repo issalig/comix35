@@ -144,9 +144,9 @@ Required Arduino libraries:
 ## Build Information
 
 - Version: 1.0.0
-- Build date: Embedded at compile time
 - Target: Arduino Nano
 - Memory requirements: <80% recommended
+- I recommend to use PlatformIO. However it is possible to compile it under Arduino IDE.
 
 ## Troubleshooting
 
