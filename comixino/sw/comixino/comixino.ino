@@ -50,7 +50,7 @@ SoftwareSerial sw_serial(SW_RX, SW_TX, false); // RX, TX
 // total size array is 47
 // size can be computed as byte [10] + 6
 const unsigned char sample_program[] PROGMEM = {
-    0x06, // [0] type (see below)
+    0x06, // [0] format (see below)
     0x43, 0x4f, 0x4d, 0x58, // [1-4] header "COMX"
     0x00, 0x0c, // [5-6] DEFUS value (ram starts at 0x4400, DEFUS is the offset)
     0x00, 0x20, // [7-8] End of program address. size info 0x20 is 32
@@ -130,11 +130,11 @@ unsigned long file_size;             // filesize used for dimensioning AY files
 // Pin definitions
 #define SD_CS     10                 // Sd card chip select pin
 
-#define BTN_UP     4                 // Up button
-#define BTN_DOWN   3                 // Down button
+#define BTN_UP     3                 // Up button 
+#define BTN_DOWN   4                 // Down button
 #define BTN_PLAY   2                 // Play Button
-#define BTN_STOP   5                 // Stop Button
-#define BTN_ROOT   6                 // Return to SD card root
+#define BTN_STOP   6                 // Stop Button
+#define BTN_ROOT   5                 // Return to SD card root
 #define BTN_RECORD 7                 // Record Button
 
 
@@ -184,7 +184,7 @@ void scroll_text(const char* text);  // Scroll text on screen
 void seek_file(int pos);             // Move to a set position in the directory
 void get_max_file();                 // Get the total number of files in the directory
 void change_dir();                   // Change directory
-void get_next_record_filename(char* out_name, size_t out_size);
+void get_next_record_filename(char* out_name, size_t out_size); // Generates a name for the next record file
 void up_file();                      // Move up a file in the directory
 void down_file();                    // Move down a file in the directory
 
@@ -205,14 +205,12 @@ void setup() {
     Serial.begin(baudrates[baudrate_index]);
 
     show_splashscreen();        
-    
+
     #ifdef SW_SERIAL
     pinMode(SW_RX, INPUT_PULLUP);
     pinMode(SW_TX, OUTPUT);
     sw_serial.begin(baudrates[baudrate_index]); // Set the baud rate for sw_serial
     #endif 
-
-    //comix_play_sample();
     
     pinMode(SD_CS, OUTPUT); 
     digitalWrite(SD_CS, HIGH);
@@ -328,7 +326,6 @@ void handle_buttons() {
     if (millis() - time_diff > 50) {   // check every 50ms
         time_diff = millis();
 
-        // --- Print key name when pressed ---
         // if (digitalRead(BTN_UP) == LOW) {
         //     print_text("UP", 3);
         // }
@@ -347,8 +344,6 @@ void handle_buttons() {
         // if (digitalRead(BTN_RECORD) == LOW) {
         //     print_text("REC", 3);
         // }
-
-
 
 static unsigned long stop_press_time = 0;
 static bool stop_long_handled = false;
@@ -782,10 +777,14 @@ void comix_play(const char* filename) {
 void comix_record(const char* filename, unsigned long max_bytes, unsigned long pre_timeout_ms, unsigned long post_timeout_ms) {
     SdFile record_file;
     unsigned long bytes_written = 0;
-    unsigned long start_time = millis();
-    const int RAM_BUF_SIZE = 128;
+    unsigned long last_byte_time = millis();
+    unsigned long last_button_check = millis();
+    const int RAM_BUF_SIZE = 256; // Increased buffer size
     unsigned char ram_buffer[RAM_BUF_SIZE];
     int ram_buf_pos = 0;
+    bool data_started = false;
+    bool stop_requested = false;
+    bool first_byte_processed = false;  // Track if first byte has been processed
 
     if (!record_file.open(filename, O_WRITE | O_CREAT | O_TRUNC)) {
         print_text(F("Open error"), 0);
@@ -795,36 +794,98 @@ void comix_record(const char* filename, unsigned long max_bytes, unsigned long p
     print_text(F("Recording"), 0);
     print_text(filename, 1);
 
-    while (bytes_written < max_bytes && (millis() - start_time) < post_timeout_ms) {
-        // Stop recording if STOP button is pressed
-        if (digitalRead(BTN_STOP) == LOW) {
-            print_text(F("Stopped"), 0);
+    // Wait for initial data or timeout
+    unsigned long wait_start = millis();
+    while (!data_started && (millis() - wait_start) < pre_timeout_ms) {
+        #ifdef SW_SERIAL
+        if (sw_serial.available()) {
+        #else
+        if (Serial.available()) {
+        #endif
+            data_started = true;
+            last_byte_time = millis();
+        }
+        
+        // Check stop button less frequently during initial wait
+        if (millis() - last_button_check > 100) {
+            last_button_check = millis();
+            if (digitalRead(BTN_STOP) == LOW) {
+                stop_requested = true;
+                break;
+            }
+        }
+        delay(1); // Small delay to prevent busy waiting
+    }
+
+    if (!data_started && !stop_requested) {
+        print_text(F("No Data"), 0);
+        record_file.close();
+        delay(1000);
+        return;
+    }
+
+    // Main recording loop - prioritize data reading over button checking
+    while (bytes_written < max_bytes && !stop_requested) {
+        bool data_available = false;
+        
+        // Read all available data in one go
+        #ifdef SW_SERIAL
+        while (sw_serial.available() && bytes_written < max_bytes && ram_buf_pos < RAM_BUF_SIZE) {
+        #else
+        while (Serial.available() && bytes_written < max_bytes && ram_buf_pos < RAM_BUF_SIZE) {
+        #endif
+            unsigned char byte_read;
+            #ifdef SW_SERIAL
+            byte_read = sw_serial.read();
+            #else
+            byte_read = Serial.read();
+            #endif
+            
+            // Validate first byte - should be 0x00 to 0x06
+            // Sometimes first byte is not in this range, so force it to 0x06
+            if (!first_byte_processed) {
+                if (byte_read > 0x06) {
+                    byte_read = 0x06;  // Default to BASIC format
+                }
+                first_byte_processed = true;
+            }
+            
+            ram_buffer[ram_buf_pos++] = byte_read;
+            bytes_written++;
+            last_byte_time = millis();
+            data_available = true;
+        }
+
+        // Write buffer to SD when full or when no more data is immediately available
+        if (ram_buf_pos >= RAM_BUF_SIZE || (ram_buf_pos > 0 && !data_available)) {
+            record_file.write(ram_buffer, ram_buf_pos);
+            ram_buf_pos = 0;
+            
+            // Only flush occasionally to improve performance
+            static unsigned long last_flush = 0;
+            if (millis() - last_flush > 500) { // Flush every 500ms
+                record_file.flush();
+                last_flush = millis();
+            }
+        }
+
+        // Check for timeout (no data received)
+        if (data_started && (millis() - last_byte_time) > post_timeout_ms) {
+            print_text(F("Timeout"), 0);
             break;
         }
-        #ifdef SW_SERIAL
-        while (sw_serial.available() && bytes_written < max_bytes)
-        #else
-        while (Serial.available() && bytes_written < max_bytes)
-        #endif        
-        {
-            unsigned char b;
-            #ifdef SW_SERIAL
-            b = sw_serial.read();
-            #else
-            b = Serial.read();
-            #endif
-            ram_buffer[ram_buf_pos++] = b;
-            bytes_written++;
-            start_time = millis();
-            if (ram_buf_pos == RAM_BUF_SIZE) {
-                record_file.write(ram_buffer, RAM_BUF_SIZE);
-                record_file.flush();
-                ram_buf_pos = 0;
+
+        // Check stop button less frequently to avoid missing data
+        if (millis() - last_button_check > 50) {
+            last_button_check = millis();
+            if (digitalRead(BTN_STOP) == LOW) {
+                stop_requested = true;
+                print_text(F("Stopped"), 0);
             }
         }
     }
 
-    // write remaining bytes
+    // Write any remaining bytes
     if (ram_buf_pos > 0) {
         record_file.write(ram_buffer, ram_buf_pos);
     }
