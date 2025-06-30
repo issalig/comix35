@@ -6,8 +6,8 @@ COMIXINO is an Arduino-based project that plays and records COMX files using Hig
 ![comxinino connected](comixino_plugged.jpg)
 
 ## Case
-3D printing files (case)
+[3D printing files](case)
 ## HW
-PCB and gerbers (hw)
+[PCB and gerbers](hw)
 ## SW
-Code for Comixino (sw)
+[Code for Comixino](sw)
