@@ -155,6 +155,7 @@ Required Arduino libraries:
 2. **File won't play**: Ensure file is valid COMX format
 3. **Recording issues**: Check serial connections and baud rate
 4. **Display problems**: Verify I2C connections and power
+5. **Recording**: Some bytes could be missed (not sure why)
 
 ### Memory Warnings
 - **Keep program memory usage below 80%**

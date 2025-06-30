@@ -8,7 +8,7 @@
 //
 // Warnings: This code is only tested on Arduino Nano
 //           Memory usage higher than 80% may cause problems with u8glib (oled) library
-//           Record function is not properly working. It misses bytes!!!!
+//           Recording function may miss bytes
 
 // Q is used as output and /EF4 as input (see HDSC project documentation)
 
