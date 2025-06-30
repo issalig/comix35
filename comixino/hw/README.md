@@ -12,3 +12,4 @@ J12: RX. Set to HW (hardware serial) as default option. Set it to SW (software s
 J8: Original connector from HSDC board that plugs to an RS232-USB converter.
 J7: Exposed pins for software serial TX/RX (not necessary)
 
+![comixino pcb](comixino/comixino.png)
