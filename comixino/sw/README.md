@@ -16,7 +16,7 @@ COMIXINO is an Arduino-based project that plays and records COMX files using Hig
   - ROOT: Return to SD card root directory
   - RECORD: Start recording mode
   - RESET: Resets COMX-35 when the jumper is installed
-- **SD Card** formatted with FAT32
+- **SD Card** formatted with FAT32 (**Max size 8Gb**)
 
 ## Pin Connections
 
