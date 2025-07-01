@@ -168,4 +168,5 @@ COMIXINO implements the High Speed Direct Connection protocol used by COMX-35 co
 
 ## License and Acknowledgments
 
-Based on TZXDuino and HDSC projects. Created by issalig, original date: 10/06/2005.
+- Based on TZXDuino and HDSC projects. 
+- Created by issalig, original date: 10/06/2005.
